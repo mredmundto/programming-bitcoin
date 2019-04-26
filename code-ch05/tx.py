@@ -125,9 +125,17 @@ class Tx:
         inputs = []
         for _ in range(num_inputs):
             inputs.append(TxIn.parse(s))
+        # Edmund - this part is for parsing output of a transaction    
+        num_outputs = read_varint(s)
+        outputs = []
+        for _ in range(num_outputs):
+            outputs.append(TxOut.parse(s))
         
-        return cls(version, inputs, None, None, testnet=testnet)
-        
+        # Edmund - this part is for parsing the locktime
+        locktime = little_endian_to_int(s.read(4))
+        return cls(version, inputs, outputs, locktime, testnet=testnet)
+
+
     # tag::source6[]
     def serialize(self):
         '''Returns the byte serialization of the transaction'''
@@ -234,7 +242,9 @@ class TxOut:
         # amount is an integer in 8 bytes, little endian
         # use Script.parse to get the ScriptPubKey
         # return an instance of the class (see __init__ for args)
-        raise NotImplementedError
+        amount = little_endian_to_int(s.read(8))
+        script_pubkey = Script.parse(s)
+        return cls(amount, script_pubkey)
 
     # tag::source4[]
     def serialize(self):  # <1>
